@@ -26,19 +26,31 @@ def measurements_csv(result: AnalysisResult) -> str:
 
 def result_to_dict(result: AnalysisResult) -> dict[str, Any]:
     """Serialize metadata, spectrum, analysis configuration, and measurements."""
-    return _json_safe({
-        "recording": {"fs_hz": result.recording.fs, "fc_hz": result.recording.fc,
-                      "source": result.recording.source, "n_samples": int(result.recording.samples.size),
-                      "meta": result.recording.meta},
-        "spectrum": {"freq_hz": result.spectrum.freq_hz, "psd_db": result.spectrum.psd_db,
-                     "rbw_hz": result.spectrum.rbw_hz, "n_averages": result.spectrum.n_averages,
-                     "params": result.spectrum.params},
-        "noise_floor_dbfs_per_hz": result.noise_floor_db,
-        "signals": [{field: getattr(signal, field) for field in MEASUREMENT_FIELDS}
-                    for signal in result.signals],
-        "config": result.config,
-        "warnings": result.warnings,
-    })
+    return _json_safe(
+        {
+            "recording": {
+                "fs_hz": result.recording.fs,
+                "fc_hz": result.recording.fc,
+                "source": result.recording.source,
+                "n_samples": int(result.recording.samples.size),
+                "meta": result.recording.meta,
+            },
+            "spectrum": {
+                "freq_hz": result.spectrum.freq_hz,
+                "psd_db": result.spectrum.psd_db,
+                "rbw_hz": result.spectrum.rbw_hz,
+                "n_averages": result.spectrum.n_averages,
+                "params": result.spectrum.params,
+            },
+            "noise_floor_dbfs_per_hz": result.noise_floor_db,
+            "signals": [
+                {field: getattr(signal, field) for field in MEASUREMENT_FIELDS}
+                for signal in result.signals
+            ],
+            "config": result.config,
+            "warnings": result.warnings,
+        }
+    )
 
 
 def result_to_json(result: AnalysisResult, *, indent: int = 2) -> str:

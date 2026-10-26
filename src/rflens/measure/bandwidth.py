@@ -4,9 +4,14 @@ import numpy as np
 from scipy.ndimage import uniform_filter1d
 
 
-def obw99(freq_hz: np.ndarray, psd_linear: np.ndarray, noise_linear: float = 0.0,
-          *, tail_fraction: float = 0.005, smooth_bins: int = 1
-          ) -> tuple[float, float, float]:
+def obw99(
+    freq_hz: np.ndarray,
+    psd_linear: np.ndarray,
+    noise_linear: float = 0.0,
+    *,
+    tail_fraction: float = 0.005,
+    smooth_bins: int = 1,
+) -> tuple[float, float, float]:
     """Return (bandwidth, low edge, high edge) containing 99% signal power.
 
     Frequencies are in Hz; PSD and ``noise_linear`` are full-scale-squared/Hz.
@@ -31,9 +36,14 @@ def obw99(freq_hz: np.ndarray, psd_linear: np.ndarray, noise_linear: float = 0.0
     return high - low, low, high
 
 
-def x_db_bandwidth(freq_hz: np.ndarray, psd_db: np.ndarray, level_db: float,
-                   *, smooth_bins: int = 3, noise_linear: float = 0.0
-                   ) -> tuple[float, float, float]:
+def x_db_bandwidth(
+    freq_hz: np.ndarray,
+    psd_db: np.ndarray,
+    level_db: float,
+    *,
+    smooth_bins: int = 3,
+    noise_linear: float = 0.0,
+) -> tuple[float, float, float]:
     """Return (bandwidth, low crossing, high crossing) at ``level_db`` below peak.
 
     Frequency is in Hz and PSD is in dBFS/Hz. Crossings use linear interpolation
@@ -50,7 +60,7 @@ def x_db_bandwidth(freq_hz: np.ndarray, psd_db: np.ndarray, level_db: float,
     peak = int(np.argmax(smooth))
     target = smooth[peak] - level_db
     lefts = np.flatnonzero(smooth[:peak] <= target)
-    rights = np.flatnonzero(smooth[peak + 1:] <= target)
+    rights = np.flatnonzero(smooth[peak + 1 :] <= target)
     if not lefts.size or not rights.size:
         raise ValueError(f"spectrum does not cross peak - {level_db:g} dB on both sides")
     left_i = int(lefts[-1])
@@ -63,9 +73,13 @@ def x_db_bandwidth(freq_hz: np.ndarray, psd_db: np.ndarray, level_db: float,
 def _validate(freq_hz: np.ndarray, values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     f, v = np.asarray(freq_hz, dtype=float), np.asarray(values, dtype=float)
     if f.ndim != 1 or v.shape != f.shape or f.size < 3:
-        raise ValueError("frequency and power arrays must be matching 1-D arrays of at least 3 bins")
+        raise ValueError(
+            "frequency and power arrays must be matching 1-D arrays of at least 3 bins"
+        )
     if not np.all(np.isfinite(f)) or not np.all(np.isfinite(v)) or np.any(np.diff(f) <= 0):
-        raise ValueError("frequency and power values must be finite with strictly increasing frequency")
+        raise ValueError(
+            "frequency and power values must be finite with strictly increasing frequency"
+        )
     return f, v
 
 

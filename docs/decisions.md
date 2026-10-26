@@ -9,3 +9,5 @@
 - Phase 2 measures each detected region with a four-bin margin and smooths linear PSD over nine bins for OBW99. This limits positive bias from clipping noisy noise-subtracted bins to zero; the margin is clipped at capture edges.
 - Welch overlap makes the nominal segment count an imperfect effective-average count. Noise median correction therefore uses the nominal segment count and is documented as approximate.
 - Monte Carlo validation specifies in-band SNR. The AWGN helper also supports sample SNR when no occupied bandwidth is supplied.
+- Welch PSD processes overlapping windows in batches of 128 segments. This bounds working memory independently of capture length; `chunk_segments` can be tuned for available memory.
+- SigMF complex-float32 and cfile IQ data are memory-mapped. Integer raw formats still require conversion into normalized complex64 samples.

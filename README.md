@@ -40,3 +40,14 @@ rflens report results.json --out report.pdf
 ```
 
 The CLI is installed from the package entry point. Install the optional Streamlit interface with `pip install -e ".[ui]"`, then run `streamlit run src/rflens/app.py`. YAML validation configs require `pip install -e ".[validation]"`.
+
+## Large-file throughput observation
+
+On the current Python 3.14.3 environment, the checked-in benchmark processed 10,000,000 complex samples with 4096-sample Welch windows in 0.329 s (4,881 segments; 30.4 million samples/s). This is a single local measurement and may vary substantially across systems.
+
+## Example artifacts
+
+- [Synthetic QPSK SigMF capture](examples/data/synthetic_qpsk.sigmf-meta) and [complex sample data](examples/data/synthetic_qpsk.sigmf-data), generated with seed 20261027, sample rate 1 MHz, center frequency 433.92 MHz, and target in-band SNR 10 dB.
+- [Synthetic QPSK PDF report](examples/reports/synthetic_qpsk_report.pdf), [JSON results](examples/reports/synthetic_qpsk_results.json), and [CSV measurements](examples/reports/synthetic_qpsk_measurements.csv). This run measured 111.397 kHz OBW99, a center of 433.919522 MHz, and 10.60 dB in-band SNR.
+
+A real-recording report is not included because the workspace contains no real IQ capture. The example report generator is ready to run when a capture and its metadata are available.

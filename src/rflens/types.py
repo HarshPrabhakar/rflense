@@ -9,6 +9,7 @@ import numpy as np
 @dataclass(frozen=True)
 class IQRecording:
     """Complex IQ recording; ``fs`` and ``fc`` are in Hz."""
+
     samples: np.ndarray
     fs: float
     fc: float = 0.0
@@ -19,6 +20,7 @@ class IQRecording:
 @dataclass(frozen=True)
 class Spectrum:
     """Two-sided PSD; ``freq_hz`` is absolute Hz and ``psd_db`` is dBFS/Hz."""
+
     freq_hz: np.ndarray
     psd_db: np.ndarray
     rbw_hz: float
@@ -29,6 +31,7 @@ class Spectrum:
 @dataclass(frozen=True)
 class SignalMeasurement:
     """Measured signal quantities, with frequencies and bandwidths in Hz."""
+
     id: int
     centre_freq_hz: float
     centre_freq_edge_hz: float
@@ -47,6 +50,7 @@ class SignalMeasurement:
 @dataclass(frozen=True)
 class AnalysisResult:
     """Analysis output for one recording."""
+
     recording: IQRecording
     spectrum: Spectrum
     noise_floor_db: float

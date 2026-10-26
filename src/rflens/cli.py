@@ -19,11 +19,18 @@ app = typer.Typer(no_args_is_help=True, help="RF-Lens IQ signal characterization
 
 
 @app.command("analyze")
-def analyze_file(path: Path, format: str = "auto", fs: float | None = None,
-                 fc: float = 0.0, nperseg: int = 4096, threshold_db: float = 6.0,
-                 report: Path | None = None, json_out: Path | None = typer.Option(None, "--json"),
-                 csv_out: Path | None = typer.Option(None, "--csv"),
-                 no_plots: bool = False) -> None:
+def analyze_file(
+    path: Path,
+    format: str = "auto",
+    fs: float | None = None,
+    fc: float = 0.0,
+    nperseg: int = 4096,
+    threshold_db: float = 6.0,
+    report: Path | None = None,
+    json_out: Path | None = typer.Option(None, "--json"),
+    csv_out: Path | None = typer.Option(None, "--csv"),
+    no_plots: bool = False,
+) -> None:
     """Analyze one recorded IQ file and optionally export PDF/JSON/CSV."""
     recording = load(path, format=format, fs=fs, fc=fc)  # type: ignore[arg-type]
     result = analyze(recording, nperseg=nperseg, threshold_db=threshold_db)
@@ -32,8 +39,10 @@ def analyze_file(path: Path, format: str = "auto", fs: float | None = None,
     typer.echo(f"Noise floor: {result.noise_floor_db:.2f} dBFS/Hz")
     typer.echo(f"Signals detected: {len(result.signals)}")
     for signal in result.signals:
-        typer.echo(f"  {signal.id}: center={signal.centre_freq_hz:.3f} Hz, "
-                   f"OBW99={signal.obw99_hz:.3f} Hz, SNR={signal.snr_db:.2f} dB")
+        typer.echo(
+            f"  {signal.id}: center={signal.centre_freq_hz:.3f} Hz, "
+            f"OBW99={signal.obw99_hz:.3f} Hz, SNR={signal.snr_db:.2f} dB"
+        )
     if report:
         build_report(result, report, include_plots=not no_plots)
         typer.echo(f"PDF report: {report}")
@@ -51,29 +60,77 @@ def analyze_file(path: Path, format: str = "auto", fs: float | None = None,
 def info(path: Path, format: str = "auto", fs: float | None = None, fc: float = 0.0) -> None:
     """Show IQ file format and recording metadata."""
     recording = load(path, format=format, fs=fs, fc=fc)  # type: ignore[arg-type]
-    typer.echo(json.dumps({"source": recording.source, "samples": recording.samples.size,
-        "sample_rate_hz": recording.fs, "center_frequency_hz": recording.fc,
-        "dtype": str(recording.samples.dtype), "duration_s": recording.samples.size / recording.fs,
-        "metadata": recording.meta}, indent=2, default=str))
+    typer.echo(
+        json.dumps(
+            {
+                "source": recording.source,
+                "samples": recording.samples.size,
+                "sample_rate_hz": recording.fs,
+                "center_frequency_hz": recording.fc,
+                "dtype": str(recording.samples.dtype),
+                "duration_s": recording.samples.size / recording.fs,
+                "metadata": recording.meta,
+            },
+            indent=2,
+            default=str,
+        )
+    )
 
 
 @app.command("synth")
-def synth(mod: str = typer.Option("QPSK", "--mod"), rs: float = typer.Option(100e3, "--rs"),
-          alpha: float = 0.35, snr: float | None = None, fs: float = typer.Option(1e6, "--fs"),
-          out: Path = typer.Option(..., "--out"), n_symbols: int = 1000, seed: int = 0,
-          fc: float = 0.0) -> None:
-    """Generate seeded PSK or FSK IQ and save SigMF data and metadata."""
+def synth(
+    mod: str = typer.Option("QPSK", "--mod"),
+    rs: float = typer.Option(100e3, "--rs"),
+    alpha: float = 0.35,
+    snr: float | None = None,
+    fs: float = typer.Option(1e6, "--fs"),
+    out: Path = typer.Option(..., "--out"),
+    n_symbols: int = 1000,
+    seed: int = 0,
+    fc: float = 0.0,
+    n_subcarriers: int = 64,
+    subcarrier_spacing_hz: float | None = None,
+    cyclic_prefix_samples: int = 16,
+    ofdm_modulation: str = "QPSK",
+) -> None:
+    """Generate seeded BPSK/QPSK/FSK/OFDM IQ and save SigMF data and metadata."""
     name = mod.upper()
     if name in ("BPSK", "QPSK"):
-        samples = generate_psk(name, symbol_rate_hz=rs, sample_rate_hz=fs,
-                               n_symbols=n_symbols, alpha=alpha, seed=seed)
+        samples = generate_psk(
+            name, symbol_rate_hz=rs, sample_rate_hz=fs, n_symbols=n_symbols, alpha=alpha, seed=seed
+        )
     elif name == "FSK":
-        samples = generate_fsk(symbol_rate_hz=rs, sample_rate_hz=fs,
-                               n_symbols=n_symbols, deviation_hz=rs / 2, seed=seed)
+        deviation = rs / 2
+        samples = generate_fsk(
+            symbol_rate_hz=rs,
+            sample_rate_hz=fs,
+            n_symbols=n_symbols,
+            deviation_hz=deviation,
+            seed=seed,
+        )
+    elif name == "OFDM":
+        subcarrier_spacing = subcarrier_spacing_hz or rs / n_subcarriers
+        samples = generate_ofdm(
+            n_subcarriers=n_subcarriers,
+            sample_rate_hz=fs,
+            subcarrier_spacing_hz=subcarrier_spacing,
+            n_symbols=n_symbols,
+            cyclic_prefix_samples=cyclic_prefix_samples,
+            modulation=ofdm_modulation,
+            seed=seed,
+        )
     else:
-        raise typer.BadParameter("Phase 4 synth CLI supports BPSK, QPSK, and FSK")
+        raise typer.BadParameter("--mod must be BPSK, QPSK, FSK, or OFDM")
+    if name in ("BPSK", "QPSK"):
+        in_bandwidth = rs * (1 + alpha)
+    elif name == "FSK":
+        in_bandwidth = 2 * (deviation + rs / 2)
+    else:
+        in_bandwidth = n_subcarriers * subcarrier_spacing
     if snr is not None:
-        samples = add_awgn(samples, snr_db=snr, seed=seed)
+        samples = add_awgn(
+            samples, snr_db=snr, seed=seed, in_bandwidth_hz=in_bandwidth, sample_rate_hz=fs
+        )
     stem = out.with_suffix("") if out.suffix in (".sigmf", ".sigmf-data", ".sigmf-meta") else out
     data_path = stem.with_suffix(".sigmf-data")
     meta_path = stem.with_suffix(".sigmf-meta")
@@ -81,10 +138,17 @@ def synth(mod: str = typer.Option("QPSK", "--mod"), rs: float = typer.Option(100
     interleaved = np.empty(samples.size * 2, dtype="<f4")
     interleaved[0::2], interleaved[1::2] = samples.real, samples.imag
     interleaved.tofile(data_path)
-    metadata = {"global": {"core:datatype": "cf32_le", "core:sample_rate": fs,
-                           "core:version": "1.0.0", "core:description": f"RF-Lens synthetic {name}; seed={seed}"},
-                "captures": [{"core:sample_start": 0, "core:frequency": fc}],
-                "annotations": []}
+    snr_note = f"; inband_snr_db={snr:g}" if snr is not None else ""
+    metadata = {
+        "global": {
+            "core:datatype": "cf32_le",
+            "core:sample_rate": fs,
+            "core:version": "1.0.0",
+            "core:description": f"RF-Lens synthetic {name}; seed={seed}{snr_note}",
+        },
+        "captures": [{"core:sample_start": 0, "core:frequency": fc}],
+        "annotations": [],
+    }
     meta_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     typer.echo(f"SigMF data: {data_path}")
     typer.echo(f"SigMF metadata: {meta_path}")
@@ -96,14 +160,20 @@ def validate(config: Path, out: Path = typer.Option(..., "--out")) -> None:
     try:
         import yaml
     except ImportError as exc:
-        raise typer.BadParameter("Install RF-Lens with the validation extra for YAML config support") from exc
+        raise typer.BadParameter(
+            "Install RF-Lens with the validation extra for YAML config support"
+        ) from exc
     settings = yaml.safe_load(config.read_text(encoding="utf-8")) or {}
     trials, summary = run_psk_validation(**settings)
     out.mkdir(parents=True, exist_ok=True)
-    (out / "summary.json").write_text(json.dumps(summary, indent=2, allow_nan=False), encoding="utf-8")
+    (out / "summary.json").write_text(
+        json.dumps(summary, indent=2, allow_nan=False), encoding="utf-8"
+    )
     with (out / "trials.csv").open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.DictWriter(stream, fieldnames=["snr_db", "seed", "detected",
-            "estimated_obw99_hz", "estimated_center_hz"])
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=["snr_db", "seed", "detected", "estimated_obw99_hz", "estimated_center_hz"],
+        )
         writer.writeheader()
         writer.writerows(trial.__dict__ for trial in trials)
     typer.echo(f"Validation outputs saved to {out}")

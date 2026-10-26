@@ -8,6 +8,8 @@ Loaders produce a one-dimensional `complex64` vector. Floating-point complex sam
 
 The estimator uses SciPy Welch with a periodic Hann window, 50% overlap by default, no segment detrending, two-sided output, and density scaling. The complex baseband frequency bins and density bins are both fft-shifted. The RF center frequency is added to the shifted baseband axis. PSD values are converted with `10 log10(P)` to dBFS/Hz.
 
+Welch windows are processed in batches (`chunk_segments=128` by default) so temporary FFT storage does not scale with the total capture length. The source sample vector itself remains accessible through the `IQRecording`; cfile, SigMF complex-float32, and NPY loaders use memory maps where possible.
+
 The reported equivalent noise bandwidth is `fs * sum(|w|^2) / |sum(w)|^2`, in Hz. `n_averages` records the number of complete Welch segments; overlapping segments are correlated, so it is not an effective-independent-average estimate.
 
 ## Phase 2 measurements

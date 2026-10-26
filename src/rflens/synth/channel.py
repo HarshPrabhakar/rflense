@@ -3,8 +3,14 @@
 import numpy as np
 
 
-def add_awgn(samples: np.ndarray, *, snr_db: float, seed: int = 0,
-             in_bandwidth_hz: float | None = None, sample_rate_hz: float | None = None) -> np.ndarray:
+def add_awgn(
+    samples: np.ndarray,
+    *,
+    snr_db: float,
+    seed: int = 0,
+    in_bandwidth_hz: float | None = None,
+    sample_rate_hz: float | None = None,
+) -> np.ndarray:
     """Add complex AWGN at sample SNR, or at a requested in-band SNR in dB.
 
     When ``in_bandwidth_hz`` is given, ``sample_rate_hz`` is also required and
@@ -22,21 +28,27 @@ def add_awgn(samples: np.ndarray, *, snr_db: float, seed: int = 0,
     else:
         noise_power = power / 10 ** (snr_db / 10)
     rng = np.random.default_rng(seed)
-    noise = np.sqrt(noise_power / 2) * (rng.standard_normal(x.size) + 1j * rng.standard_normal(x.size))
+    noise = np.sqrt(noise_power / 2) * (
+        rng.standard_normal(x.size) + 1j * rng.standard_normal(x.size)
+    )
     return (x + noise).astype(np.result_type(samples, np.complex64))
 
 
-def apply_cfo(samples: np.ndarray, *, offset_hz: float, sample_rate_hz: float,
-              phase_rad: float = 0.0) -> np.ndarray:
+def apply_cfo(
+    samples: np.ndarray, *, offset_hz: float, sample_rate_hz: float, phase_rad: float = 0.0
+) -> np.ndarray:
     """Apply carrier-frequency and initial-phase offsets."""
     if sample_rate_hz <= 0:
         raise ValueError("sample_rate_hz must be positive")
     n = np.arange(np.asarray(samples).size)
-    return np.asarray(samples) * np.exp(1j * (2 * np.pi * offset_hz * n / sample_rate_hz + phase_rad))
+    return np.asarray(samples) * np.exp(
+        1j * (2 * np.pi * offset_hz * n / sample_rate_hz + phase_rad)
+    )
 
 
-def apply_iq_imbalance(samples: np.ndarray, *, gain_db: float = 0.0,
-                       phase_error_rad: float = 0.0, dc: complex = 0j) -> np.ndarray:
+def apply_iq_imbalance(
+    samples: np.ndarray, *, gain_db: float = 0.0, phase_error_rad: float = 0.0, dc: complex = 0j
+) -> np.ndarray:
     """Apply gain/phase imbalance and complex DC offset to IQ samples."""
     x = np.asarray(samples)
     q_gain = 10 ** (gain_db / 20)

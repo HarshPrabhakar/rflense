@@ -6,9 +6,14 @@ from scipy.stats import gamma
 from rflens.types import Spectrum
 
 
-def estimate_noise_floor(spectrum: Spectrum, *, edge_fraction: float = 0.05,
-                         mask_threshold_db: float = 6.0, dilation_bins: int = 3,
-                         iterations: int = 2) -> float:
+def estimate_noise_floor(
+    spectrum: Spectrum,
+    *,
+    edge_fraction: float = 0.05,
+    mask_threshold_db: float = 6.0,
+    dilation_bins: int = 3,
+    iterations: int = 2,
+) -> float:
     """Estimate noise density in dBFS/Hz from PSD bins.
 
     Excludes the outer ``edge_fraction`` at each band edge and corrects the median
@@ -25,7 +30,7 @@ def estimate_noise_floor(spectrum: Spectrum, *, edge_fraction: float = 0.05,
     n = psd.size
     edge = int(np.floor(n * edge_fraction))
     eligible = np.zeros(n, dtype=bool)
-    eligible[edge:n-edge if edge else n] = True
+    eligible[edge : n - edge if edge else n] = True
     averages = max(1, int(spectrum.n_averages))
     median_factor = float(gamma.median(a=averages, scale=1.0 / averages))
     correction = 1.0 / median_factor

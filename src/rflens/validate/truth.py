@@ -20,8 +20,9 @@ class SignalTruth:
     snr_db: float | None = None
 
 
-def numerical_obw99(samples: np.ndarray, *, fs: float, fc: float = 0.0,
-                    nperseg: int = 4096) -> float:
+def numerical_obw99(
+    samples: np.ndarray, *, fs: float, fc: float = 0.0, nperseg: int = 4096
+) -> float:
     """Compute noiseless numerical OBW99 in Hz from a generated waveform."""
     rec = IQRecording(np.asarray(samples), fs, fc, "synthetic:truth")
     spectrum = welch_psd(rec, nperseg=nperseg)
@@ -30,12 +31,21 @@ def numerical_obw99(samples: np.ndarray, *, fs: float, fc: float = 0.0,
     return bandwidth
 
 
-def build_signal_truth(modulation: str, samples: np.ndarray, *, fs: float, fc: float,
-                       seed: int, symbol_rate_hz: float | None = None,
-                       alpha: float | None = None, deviation_hz: float | None = None,
-                       n_subcarriers: int | None = None,
-                       subcarrier_spacing_hz: float | None = None,
-                       nperseg: int = 4096, snr_db: float | None = None) -> SignalTruth:
+def build_signal_truth(
+    modulation: str,
+    samples: np.ndarray,
+    *,
+    fs: float,
+    fc: float,
+    seed: int,
+    symbol_rate_hz: float | None = None,
+    alpha: float | None = None,
+    deviation_hz: float | None = None,
+    n_subcarriers: int | None = None,
+    subcarrier_spacing_hz: float | None = None,
+    nperseg: int = 4096,
+    snr_db: float | None = None,
+) -> SignalTruth:
     """Build theoretical and numerical OBW truth for common modulation families."""
     name = modulation.upper()
     if name in ("BPSK", "QPSK"):
@@ -52,6 +62,10 @@ def build_signal_truth(modulation: str, samples: np.ndarray, *, fs: float, fc: f
         theoretical = n_subcarriers * subcarrier_spacing_hz
     else:
         raise ValueError(f"Unsupported modulation for truth: {modulation}")
-    return SignalTruth(float(fc), float(theoretical),
-                       numerical_obw99(samples, fs=fs, fc=fc, nperseg=nperseg),
-                       int(seed), snr_db)
+    return SignalTruth(
+        float(fc),
+        float(theoretical),
+        numerical_obw99(samples, fs=fs, fc=fc, nperseg=nperseg),
+        int(seed),
+        snr_db,
+    )

@@ -1,6 +1,7 @@
 import json
 
 import matplotlib
+
 matplotlib.use("Agg")
 
 import numpy as np
@@ -13,10 +14,12 @@ from rflens.types import AnalysisResult, IQRecording, SignalMeasurement, Spectru
 
 def test_analysis_json_csv_round_trip_and_pdf(tmp_path):
     rng = np.random.default_rng(40)
-    samples = (0.2 * np.exp(2j * np.pi * 0.1 * np.arange(8192)) +
-               0.01 * (rng.standard_normal(8192) + 1j * rng.standard_normal(8192)))
-    result = analyze(IQRecording(samples.astype(np.complex64), 1e6, 433e6, "synthetic:test"),
-                     nperseg=512)
+    samples = 0.2 * np.exp(2j * np.pi * 0.1 * np.arange(8192)) + 0.01 * (
+        rng.standard_normal(8192) + 1j * rng.standard_normal(8192)
+    )
+    result = analyze(
+        IQRecording(samples.astype(np.complex64), 1e6, 433e6, "synthetic:test"), nperseg=512
+    )
     payload = result_to_json(result)
     decoded = json.loads(payload)
     assert decoded["recording"]["n_samples"] == 8192
@@ -34,7 +37,8 @@ def test_analysis_json_csv_round_trip_and_pdf(tmp_path):
 def test_json_converts_nonfinite_measurements_to_null():
     rec = IQRecording(np.zeros(8, dtype=np.complex64), 8.0)
     spectrum = Spectrum(np.arange(8.0), np.zeros(8), 1.5, 1)
-    signal = SignalMeasurement(1, 1.0, 1.0, 1.0, float("nan"), float("nan"), float("nan"),
-        0.0, 2.0, -20.0, 10.0, 10.0)
+    signal = SignalMeasurement(
+        1, 1.0, 1.0, 1.0, float("nan"), float("nan"), float("nan"), 0.0, 2.0, -20.0, 10.0, 10.0
+    )
     result = AnalysisResult(rec, spectrum, -100.0, [signal], {}, [])
     assert json.loads(result_to_json(result))["signals"][0]["obw99_hz"] is None

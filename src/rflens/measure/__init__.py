@@ -7,5 +7,13 @@ from rflens.measure.detect import SignalRegion, detect_regions
 from rflens.measure.noise import estimate_noise_floor
 from rflens.measure.power import signal_power_and_snr
 
-__all__ = ["SignalRegion", "analyze_spectrum", "detect_regions", "estimate_noise_floor",
-           "obw99", "signal_power_and_snr", "spectral_centres", "x_db_bandwidth"]
+__all__ = [
+    "SignalRegion",
+    "analyze_spectrum",
+    "detect_regions",
+    "estimate_noise_floor",
+    "obw99",
+    "signal_power_and_snr",
+    "spectral_centres",
+    "x_db_bandwidth",
+]

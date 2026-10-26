@@ -15,7 +15,7 @@ class ErrorMetrics:
     relative_rmse: float
 
 
-def error_metrics(estimates: np.ndarray, truth: float) -> ErrorMetrics:
+def error_metrics(estimates: np.ndarray | list[float], truth: float) -> ErrorMetrics:
     """Calculate errors in input units against one finite truth value."""
     values = np.asarray(estimates, dtype=float)
     if values.ndim != 1 or values.size == 0 or not np.all(np.isfinite(values)):
@@ -25,6 +25,6 @@ def error_metrics(estimates: np.ndarray, truth: float) -> ErrorMetrics:
     errors = values - truth
     bias = float(np.mean(errors))
     std = float(np.std(errors))
-    rmse = float(np.sqrt(np.mean(errors ** 2)))
+    rmse = float(np.sqrt(np.mean(errors**2)))
     relative = float(rmse / abs(truth)) if truth != 0 else float("nan")
     return ErrorMetrics(bias, std, rmse, relative)

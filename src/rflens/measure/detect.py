@@ -20,9 +20,15 @@ class SignalRegion:
         return self.stop - self.start + 1
 
 
-def detect_regions(spectrum: Spectrum, noise_floor_db: float, *, threshold_db: float = 6.0,
-                   min_width_bins: int = 3, merge_gap_hz: float = 0.0,
-                   dc_guard_hz: float | None = None) -> list[SignalRegion]:
+def detect_regions(
+    spectrum: Spectrum,
+    noise_floor_db: float,
+    *,
+    threshold_db: float = 6.0,
+    min_width_bins: int = 3,
+    merge_gap_hz: float = 0.0,
+    dc_guard_hz: float | None = None,
+) -> list[SignalRegion]:
     """Detect contiguous PSD regions above noise floor plus ``threshold_db``.
 
     ``merge_gap_hz`` and ``dc_guard_hz`` are in Hz. Frequency edge overlap is
@@ -53,9 +59,12 @@ def detect_regions(spectrum: Spectrum, noise_floor_db: float, *, threshold_db: f
         if start == 0 or stop == freq.size - 1:
             flags.append("near_band_edge")
         tuned_center = (freq[0] + freq[-1]) / 2.0
-        if (dc_guard_hz is not None and dc_guard_hz > 0
-                and freq[start] <= tuned_center + dc_guard_hz
-                and freq[stop] >= tuned_center - dc_guard_hz):
+        if (
+            dc_guard_hz is not None
+            and dc_guard_hz > 0
+            and freq[start] <= tuned_center + dc_guard_hz
+            and freq[stop] >= tuned_center - dc_guard_hz
+        ):
             flags.append("dc_spike_overlap")
         result.append(SignalRegion(start, stop, tuple(flags)))
     return result

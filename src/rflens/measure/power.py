@@ -3,8 +3,9 @@
 import numpy as np
 
 
-def signal_power_and_snr(psd_linear: np.ndarray, noise_density: float,
-                         bin_width_hz: float) -> tuple[float, float, float]:
+def signal_power_and_snr(
+    psd_linear: np.ndarray, noise_density: float, bin_width_hz: float
+) -> tuple[float, float, float]:
     """Return (signal dBFS, level above noise dB, in-band SNR dB).
 
     PSD and noise density are in full-scale-squared/Hz; bin width is in Hz.

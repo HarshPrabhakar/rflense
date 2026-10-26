@@ -33,8 +33,10 @@ def test_raw_normalization(tmp_path):
     rtl = tmp_path / "rtl.bin"
     np.array([255, 0, 127, 128], dtype=np.uint8).tofile(rtl)
     rec = load(rtl, format="rtl", fs=1)
-    np.testing.assert_allclose(rec.samples, [(255 - 127.5) / 127.5 - 1j,
-                                             (127 - 127.5) / 127.5 + (128 - 127.5) / 127.5 * 1j])
+    np.testing.assert_allclose(
+        rec.samples,
+        [(255 - 127.5) / 127.5 - 1j, (127 - 127.5) / 127.5 + (128 - 127.5) / 127.5 * 1j],
+    )
     hackrf = tmp_path / "hackrf.bin"
     np.array([-128, 127, 64, -64], dtype=np.int8).tofile(hackrf)
     rec = load(hackrf, format="hackrf", fs=1)
@@ -55,9 +57,10 @@ def test_wav_iq_and_rate_from_header(tmp_path):
 
 
 def test_sigmf_metadata_and_interleaved_data(tmp_path):
-    stem = tmp_path / "sample"
-    metadata = {"global": {"core:sample_rate": 1e6, "core:datatype": "cf32_le"},
-                "captures": [{"core:frequency": 915e6}]}
+    metadata = {
+        "global": {"core:sample_rate": 1e6, "core:datatype": "cf32_le"},
+        "captures": [{"core:frequency": 915e6}],
+    }
     (tmp_path / "sample.sigmf-meta").write_text(json.dumps(metadata), encoding="utf-8")
     np.array([1, 0, 0, -1], dtype="<f4").tofile(tmp_path / "sample.sigmf-data")
     rec = load(tmp_path / "sample.sigmf-meta")

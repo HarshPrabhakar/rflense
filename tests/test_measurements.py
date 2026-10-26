@@ -1,7 +1,13 @@
 import numpy as np
 
-from rflens.measure import (analyze_spectrum, detect_regions, estimate_noise_floor,
-                            obw99, spectral_centres, x_db_bandwidth)
+from rflens.measure import (
+    analyze_spectrum,
+    detect_regions,
+    estimate_noise_floor,
+    obw99,
+    spectral_centres,
+    x_db_bandwidth,
+)
 from rflens.measure.power import signal_power_and_snr
 from rflens.types import Spectrum
 
@@ -13,8 +19,13 @@ def gaussian_spectrum():
     sigma = 20 * df
     noise = 1e-9
     signal = 1e-6 * np.exp(-0.5 * ((f - (fc + 100 * df)) / sigma) ** 2)
-    spectrum = Spectrum(f, 10 * np.log10(noise + signal), 1.5 * df, 32,
-                        {"window": "hann", "nperseg": nfft, "noverlap": nfft // 2})
+    spectrum = Spectrum(
+        f,
+        10 * np.log10(noise + signal),
+        1.5 * df,
+        32,
+        {"window": "hann", "nperseg": nfft, "noverlap": nfft // 2},
+    )
     return spectrum, noise, sigma, df
 
 
@@ -75,7 +86,15 @@ def test_measurements_from_detected_gaussian():
     assert len(signals) == 1
     measured = signals[0]
     assert abs(measured.obw99_hz / (2 * sigma * 2.575829) - 1) < 0.05
-    assert abs(measured.centre_freq_hz - (spectrum.freq_hz[len(spectrum.freq_hz)//2] +
-                                          100 * (spectrum.freq_hz[1] - spectrum.freq_hz[0]))) < 2
+    assert (
+        abs(
+            measured.centre_freq_hz
+            - (
+                spectrum.freq_hz[len(spectrum.freq_hz) // 2]
+                + 100 * (spectrum.freq_hz[1] - spectrum.freq_hz[0])
+            )
+        )
+        < 2
+    )
     assert measured.snr_db > 20
     assert measured.power_dbfs < 0

@@ -26,9 +26,13 @@ class SceneSignal:
     ofdm_modulation: str = "QPSK"
 
 
-def generate_scene(signals: list[SceneSignal], *, sample_rate_hz: float,
-                   center_frequency_hz: float = 0.0, n_samples: int | None = None
-                   ) -> IQRecording:
+def generate_scene(
+    signals: list[SceneSignal],
+    *,
+    sample_rate_hz: float,
+    center_frequency_hz: float = 0.0,
+    n_samples: int | None = None,
+) -> IQRecording:
     """Synthesize and sum PSK/FSK signals at declared offsets and powers."""
     if not signals:
         raise ValueError("scene must contain at least one signal")
@@ -36,18 +40,32 @@ def generate_scene(signals: list[SceneSignal], *, sample_rate_hz: float,
     for signal in signals:
         name = signal.modulation.upper()
         if name in ("BPSK", "QPSK"):
-            wave = generate_psk(name, symbol_rate_hz=signal.symbol_rate_hz,
-                sample_rate_hz=sample_rate_hz, n_symbols=signal.n_symbols,
-                alpha=signal.alpha, seed=signal.seed)
+            wave = generate_psk(
+                name,
+                symbol_rate_hz=signal.symbol_rate_hz,
+                sample_rate_hz=sample_rate_hz,
+                n_symbols=signal.n_symbols,
+                alpha=signal.alpha,
+                seed=signal.seed,
+            )
         elif name == "FSK":
-            wave = generate_fsk(symbol_rate_hz=signal.symbol_rate_hz,
-                sample_rate_hz=sample_rate_hz, n_symbols=signal.n_symbols,
-                deviation_hz=signal.deviation_hz, seed=signal.seed)
+            wave = generate_fsk(
+                symbol_rate_hz=signal.symbol_rate_hz,
+                sample_rate_hz=sample_rate_hz,
+                n_symbols=signal.n_symbols,
+                deviation_hz=signal.deviation_hz,
+                seed=signal.seed,
+            )
         elif name == "OFDM":
-            wave = generate_ofdm(n_subcarriers=signal.n_subcarriers,
-                sample_rate_hz=sample_rate_hz, subcarrier_spacing_hz=signal.subcarrier_spacing_hz,
-                n_symbols=signal.n_symbols, cyclic_prefix_samples=signal.cyclic_prefix_samples,
-                modulation=signal.ofdm_modulation, seed=signal.seed)
+            wave = generate_ofdm(
+                n_subcarriers=signal.n_subcarriers,
+                sample_rate_hz=sample_rate_hz,
+                subcarrier_spacing_hz=signal.subcarrier_spacing_hz,
+                n_symbols=signal.n_symbols,
+                cyclic_prefix_samples=signal.cyclic_prefix_samples,
+                modulation=signal.ofdm_modulation,
+                seed=signal.seed,
+            )
         else:
             raise ValueError(f"Unsupported modulation: {signal.modulation}")
         generated.append((signal, wave))
@@ -62,6 +80,13 @@ def generate_scene(signals: list[SceneSignal], *, sample_rate_hz: float,
         if mean_power == 0:
             continue
         scaled = segment / np.sqrt(mean_power) * 10 ** (signal.power_db / 20)
-        composite[:n] += scaled * np.exp(2j * np.pi * signal.center_offset_hz * np.arange(n) / sample_rate_hz)
-    return IQRecording(composite.astype(np.complex64), sample_rate_hz, center_frequency_hz,
-                       "synthetic:scene", {"signals": [s.__dict__ for s in signals]})
+        composite[:n] += scaled * np.exp(
+            2j * np.pi * signal.center_offset_hz * np.arange(n) / sample_rate_hz
+        )
+    return IQRecording(
+        composite.astype(np.complex64),
+        sample_rate_hz,
+        center_frequency_hz,
+        "synthetic:scene",
+        {"signals": [s.__dict__ for s in signals]},
+    )

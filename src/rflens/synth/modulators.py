@@ -6,9 +6,16 @@ from scipy.signal import upfirdn
 from rflens.synth.pulse import rrc_taps
 
 
-def generate_psk(modulation: str, *, symbol_rate_hz: float, sample_rate_hz: float,
-                 n_symbols: int, alpha: float = 0.35, seed: int = 0,
-                 span_symbols: int = 10) -> np.ndarray:
+def generate_psk(
+    modulation: str,
+    *,
+    symbol_rate_hz: float,
+    sample_rate_hz: float,
+    n_symbols: int,
+    alpha: float = 0.35,
+    seed: int = 0,
+    span_symbols: int = 10,
+) -> np.ndarray:
     """Generate pulse-shaped BPSK or QPSK complex baseband samples."""
     sps = _samples_per_symbol(symbol_rate_hz, sample_rate_hz)
     if n_symbols < 1:
@@ -25,8 +32,14 @@ def generate_psk(modulation: str, *, symbol_rate_hz: float, sample_rate_hz: floa
     return upfirdn(rrc_taps(alpha, sps, span_symbols), symbols, up=sps).astype(np.complex64)
 
 
-def generate_fsk(*, symbol_rate_hz: float, sample_rate_hz: float, n_symbols: int,
-                 deviation_hz: float, seed: int = 0) -> np.ndarray:
+def generate_fsk(
+    *,
+    symbol_rate_hz: float,
+    sample_rate_hz: float,
+    n_symbols: int,
+    deviation_hz: float,
+    seed: int = 0,
+) -> np.ndarray:
     """Generate continuous-phase binary FSK with rectangular symbol pulses."""
     sps = _samples_per_symbol(symbol_rate_hz, sample_rate_hz)
     if n_symbols < 1 or deviation_hz <= 0:
@@ -37,9 +50,16 @@ def generate_fsk(*, symbol_rate_hz: float, sample_rate_hz: float, n_symbols: int
     return np.exp(1j * phase).astype(np.complex64)
 
 
-def generate_ofdm(*, n_subcarriers: int, sample_rate_hz: float, subcarrier_spacing_hz: float,
-                  n_symbols: int, cyclic_prefix_samples: int = 0, modulation: str = "QPSK",
-                  seed: int = 0) -> np.ndarray:
+def generate_ofdm(
+    *,
+    n_subcarriers: int,
+    sample_rate_hz: float,
+    subcarrier_spacing_hz: float,
+    n_symbols: int,
+    cyclic_prefix_samples: int = 0,
+    modulation: str = "QPSK",
+    seed: int = 0,
+) -> np.ndarray:
     """Generate CP-OFDM samples; carrier spacing and sample rate are in Hz."""
     if n_subcarriers < 2 or n_symbols < 1 or cyclic_prefix_samples < 0:
         raise ValueError("invalid OFDM dimensions")
@@ -51,16 +71,20 @@ def generate_ofdm(*, n_subcarriers: int, sample_rate_hz: float, subcarrier_spaci
     rng = np.random.default_rng(seed)
     name = modulation.upper()
     if name == "QPSK":
-        symbols = np.exp(1j * (np.pi / 4 + rng.integers(0, 4, (n_symbols, n_subcarriers)) * np.pi / 2))
+        symbols = np.exp(
+            1j * (np.pi / 4 + rng.integers(0, 4, (n_symbols, n_subcarriers)) * np.pi / 2)
+        )
     elif name == "16QAM":
         levels = np.array([-3, -1, 1, 3])
-        symbols = (rng.choice(levels, (n_symbols, n_subcarriers)) +
-                   1j * rng.choice(levels, (n_symbols, n_subcarriers))) / np.sqrt(10)
+        symbols = (
+            rng.choice(levels, (n_symbols, n_subcarriers))
+            + 1j * rng.choice(levels, (n_symbols, n_subcarriers))
+        ) / np.sqrt(10)
     else:
         raise ValueError("OFDM modulation must be QPSK or 16QAM")
     grid = np.zeros((n_symbols, nfft), dtype=np.complex128)
     start = (nfft - n_subcarriers) // 2
-    grid[:, start:start + n_subcarriers] = symbols
+    grid[:, start : start + n_subcarriers] = symbols
     useful = np.fft.ifft(np.fft.ifftshift(grid, axes=1), axis=1) * np.sqrt(nfft)
     if cyclic_prefix_samples:
         useful = np.concatenate((useful[:, -cyclic_prefix_samples:], useful), axis=1)

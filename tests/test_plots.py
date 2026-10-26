@@ -1,8 +1,9 @@
 import matplotlib
+
 matplotlib.use("Agg")
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from rflens.dsp.plots import plot_psd, plot_spectrogram
 from rflens.dsp.psd import welch_psd
