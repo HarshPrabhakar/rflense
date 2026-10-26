@@ -9,3 +9,11 @@ Loaders produce a one-dimensional `complex64` vector. Floating-point complex sam
 The estimator uses SciPy Welch with a periodic Hann window, 50% overlap by default, no segment detrending, two-sided output, and density scaling. The complex baseband frequency bins and density bins are both fft-shifted. The RF center frequency is added to the shifted baseband axis. PSD values are converted with `10 log10(P)` to dBFS/Hz.
 
 The reported equivalent noise bandwidth is `fs * sum(|w|^2) / |sum(w)|^2`, in Hz. `n_averages` records the number of complete Welch segments; overlapping segments are correlated, so it is not an effective-independent-average estimate.
+
+## Phase 2 measurements
+
+The noise floor is the median of linear PSD bins after excluding the outer 5% on each side. The median is corrected to a mean estimate with the Gamma-distribution median for the spectrum's Welch segment count. Bins more than 6 dB above that estimate are dilated and excluded for up to two refinements. This is an approximation because overlapping Welch segments are correlated.
+
+Detection groups contiguous bins at or above noise floor + threshold and optionally merges gaps in Hz. OBW99 integrates trapezoidally over the expanded region after subtracting the estimated noise density; 0.5% of integrated signal power is excluded from each tail. The -3 dB and -26 dB widths use lightly smoothed, noise-subtracted PSD with linearly interpolated crossings in dB.
+
+Signal power integrates positive noise-subtracted PSD bins. SNR is the ratio of this power to estimated noise density times the expanded measurement bandwidth, in dB. This is an in-band estimate; it is not an absolute calibrated power measurement.
