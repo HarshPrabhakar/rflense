@@ -13,7 +13,7 @@ from rflens.types import SignalMeasurement, Spectrum
 
 def analyze_spectrum(spectrum: Spectrum, *, threshold_db: float = 6.0,
                      edge_fraction: float = 0.05, min_width_bins: int = 3,
-                     merge_gap_hz: float = 0.0, margin_bins: int | None = None,
+                     merge_gap_hz: float = 0.0, margin_bins: int | None = 4,
                      dc_guard_hz: float | None = None,
                      centroid_tolerance_fraction: float = 0.1
                      ) -> tuple[float, list[SignalMeasurement]]:
@@ -34,8 +34,6 @@ def _measure_region(spectrum: Spectrum, region: SignalRegion, floor_db: float,
                     margin_bins: int | None, signal_id: int,
                     tolerance: float) -> SignalMeasurement:
     f, p_db = np.asarray(spectrum.freq_hz), np.asarray(spectrum.psd_db)
-    if margin_bins is None:
-        margin_bins = region.width_bins
     if margin_bins < 0:
         raise ValueError("margin_bins must be non-negative")
     start, stop = max(0, region.start - margin_bins), min(len(f) - 1, region.stop + margin_bins)
@@ -43,19 +41,38 @@ def _measure_region(spectrum: Spectrum, region: SignalRegion, floor_db: float,
     f_band, p_db_band = f[indices], p_db[indices]
     p_band = 10 ** (p_db_band / 10.0)
     noise = 10 ** (floor_db / 10.0)
-    obw, low, high = obw99(f_band, p_band, noise)
-    bw3, _, _ = x_db_bandwidth(f_band, p_db_band, 3.0, noise_linear=noise)
-    bw26, _, _ = x_db_bandwidth(f_band, p_db_band, 26.0, noise_linear=noise)
-    centroid, peak = spectral_centres(f_band, p_band, noise)
+    flags = list(region.flags)
+    try:
+        obw, low, high = obw99(f_band, p_band, noise, smooth_bins=9)
+    except ValueError:
+        obw, low, high = float("nan"), float(f_band[0]), float(f_band[-1])
+        flags.append("obw_unavailable")
+    try:
+        bw3, _, _ = x_db_bandwidth(f_band, p_db_band, 3.0, noise_linear=noise)
+    except ValueError:
+        bw3 = float("nan")
+        flags.append("bw_3db_unavailable")
+    try:
+        bw26, _, _ = x_db_bandwidth(f_band, p_db_band, 26.0, noise_linear=noise)
+    except ValueError:
+        bw26 = float("nan")
+        flags.append("bw_26db_unavailable")
+    try:
+        centroid, peak = spectral_centres(f_band, p_band, noise)
+    except ValueError:
+        peak = float(f_band[int(np.argmax(p_band))])
+        centroid = peak
+        flags.append("centre_unavailable")
     df = float(np.median(np.diff(f_band)))
     power_dbfs, level_noise, snr = signal_power_and_snr(p_band, noise, df)
     centre_edges = (low + high) / 2.0
-    flags = list(region.flags)
-    if max(abs(centroid - peak), abs(centroid - centre_edges)) > max(obw, df) * tolerance:
+    if np.isfinite(obw) and max(abs(centroid - peak), abs(centroid - centre_edges)) > max(obw, df) * tolerance:
         flags.append("centre_estimates_disagree")
     noise_subtracted_db = 10.0 * np.log10(np.maximum(p_band - noise, np.finfo(float).tiny))
     peak_indices, peak_props = find_peaks(noise_subtracted_db, prominence=3.0)
     if peak_indices.size >= 2 and np.count_nonzero(peak_props["prominences"] >= 3.0) >= 2:
         flags.append("non_unimodal")
+    if snr < 6.0:
+        flags.append("low_snr")
     return SignalMeasurement(signal_id, centroid, centre_edges, peak, obw, bw3, bw26,
         low, high, power_dbfs, level_noise, snr, flags)

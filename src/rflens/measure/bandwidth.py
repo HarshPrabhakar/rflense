@@ -5,7 +5,8 @@ from scipy.ndimage import uniform_filter1d
 
 
 def obw99(freq_hz: np.ndarray, psd_linear: np.ndarray, noise_linear: float = 0.0,
-          *, tail_fraction: float = 0.005) -> tuple[float, float, float]:
+          *, tail_fraction: float = 0.005, smooth_bins: int = 1
+          ) -> tuple[float, float, float]:
     """Return (bandwidth, low edge, high edge) containing 99% signal power.
 
     Frequencies are in Hz; PSD and ``noise_linear`` are full-scale-squared/Hz.
@@ -16,7 +17,10 @@ def obw99(freq_hz: np.ndarray, psd_linear: np.ndarray, noise_linear: float = 0.0
         raise ValueError("noise_linear must be finite and non-negative")
     if not 0 <= tail_fraction < 0.5:
         raise ValueError("tail_fraction must be in [0, 0.5)")
-    signal = np.maximum(p - noise_linear, 0.0)
+    if smooth_bins < 1:
+        raise ValueError("smooth_bins must be positive")
+    smoothed = uniform_filter1d(p, size=min(smooth_bins, p.size), mode="nearest")
+    signal = np.maximum(smoothed - noise_linear, 0.0)
     if not np.any(signal > 0):
         raise ValueError("cannot measure bandwidth with zero noise-subtracted power")
     cumulative = np.zeros(signal.size, dtype=float)
