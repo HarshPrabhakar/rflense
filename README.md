@@ -29,3 +29,14 @@ Phase 3's seeded default QPSK sweep ran 100 trials at each target in-band SNR fr
 | 30 dB | 100% | 3.04% | 0.70 kHz | 0.00 |
 
 For this scenario, the measured OBW99 relative RMSE is below the 5% target at 10 dB and above. At 5 dB, many extra regions are detected and bandwidth error is high; this limitation is retained in the results rather than filtered away. This sweep validates QPSK OBW/center behavior only; it does not establish equivalent performance for BPSK, FSK, OFDM, or impairments.
+
+## Interfaces
+
+```powershell
+rflens analyze capture.sigmf-meta --nperseg 4096 --report report.pdf --json results.json --csv measurements.csv
+rflens info capture.npy --fs 1000000
+rflens synth --mod qpsk --rs 100000 --alpha 0.35 --fs 1000000 --out sample.sigmf
+rflens report results.json --out report.pdf
+```
+
+The CLI is installed from the package entry point. Install the optional Streamlit interface with `pip install -e ".[ui]"`, then run `streamlit run src/rflens/app.py`. YAML validation configs require `pip install -e ".[validation]"`.

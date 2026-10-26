@@ -8,11 +8,16 @@ version = "0.1.0"
 description = "Toolkit for characterizing recorded IQ signals"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["numpy>=1.26", "scipy>=1.11", "matplotlib>=3.8"]
+dependencies = ["numpy>=1.26", "scipy>=1.11", "matplotlib>=3.8", "typer>=0.12"]
 
 [project.optional-dependencies]
 sigmf = ["sigmf>=1.2"]
 test = ["pytest>=8", "pytest-cov>=5"]
+ui = ["streamlit>=1.35"]
+validation = ["PyYAML>=6"]
+
+[project.scripts]
+rflens = "rflens.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
