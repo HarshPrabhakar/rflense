@@ -5,7 +5,10 @@
 Python 3.11 or newer is required.
 
 ```powershell
-python -m pip install -e ".[test,quality]"
+python -m venv .venv
+# Activate with .venv\Scripts\Activate.ps1 on Windows, or source .venv/bin/activate on macOS/Linux.
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 python -m pytest
 ruff check src tests
 mypy src/rflens

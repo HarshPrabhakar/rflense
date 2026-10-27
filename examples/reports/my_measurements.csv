@@ -1,0 +1,2 @@
+id,centre_freq_hz,centre_freq_edge_hz,peak_freq_hz,obw99_hz,bw_3db_hz,bw_26db_hz,f_low_hz,f_high_hz,power_dbfs,level_above_noise_db,snr_db,flags
+1,433919427.8096275,433919511.044616,433953691.40625,109998.88849973679,82787.64572900534,,433864511.6003661,433974510.48886585,-10.07254089866312,10.662249163800475,10.662249163800475,"['bw_26db_unavailable', 'centre_estimates_disagree', 'non_unimodal']"

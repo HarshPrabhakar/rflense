@@ -1,0 +1,15 @@
+{
+  "global": {
+    "core:datatype": "cf32_le",
+    "core:sample_rate": 1000000.0,
+    "core:version": "1.0.0",
+    "core:description": "Synthetic BPSK example; target in-band SNR=20 dB; seed=20261029"
+  },
+  "captures": [
+    {
+      "core:sample_start": 0,
+      "core:frequency": 433920000.0
+    }
+  ],
+  "annotations": []
+}

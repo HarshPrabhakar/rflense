@@ -4,9 +4,43 @@ RF-Lens is a Python toolkit for loading recorded IQ data, estimating spectra, ch
 
 ## Development
 
+Windows PowerShell:
+
 ```powershell
-python -m pip install -e ".[test]"
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+rflens --help
+```
+
+macOS/Linux:
+
+```sh
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Run the web UI:
+
+```powershell
+streamlit run src/rflens/app.py
+```
+
+Analyze an IQ file and write a PDF, JSON, and CSV:
+
+```powershell
+rflens analyze capture.sigmf-meta --nperseg 4096 --report report.pdf --json results.json --csv measurements.csv
+```
+
+Run tests and code-quality checks:
+
+```powershell
 python -m pytest
+ruff check src tests
+mypy src/rflens
 ```
 
 ## Phase 1 API
@@ -51,3 +85,24 @@ On the current Python 3.14.3 environment, the checked-in benchmark processed 10,
 - [Synthetic QPSK PDF report](examples/reports/synthetic_qpsk_report.pdf), [JSON results](examples/reports/synthetic_qpsk_results.json), and [CSV measurements](examples/reports/synthetic_qpsk_measurements.csv). This run measured 111.397 kHz OBW99, a center of 433.919522 MHz, and 10.60 dB in-band SNR.
 
 A real-recording report is not included because the workspace contains no real IQ capture. The example report generator is ready to run when a capture and its metadata are available.
+
+## Generate uploadable practice captures
+
+You can generate five synthetic SigMF captures without an SDR. Each capture
+gets its own folder containing a matching `.sigmf-meta` and `.sigmf-data` pair:
+
+```powershell
+python examples/generate_captures.py
+```
+
+By default, the folders are created under `examples/generated_captures`.
+Choose a different output path or generate fewer captures with:
+
+```powershell
+python examples/generate_captures.py --out my_captures --count 3
+```
+
+Upload the `.sigmf-meta` file from one capture folder; keep its matching
+`.sigmf-data` file in the same folder. The set includes BPSK, QPSK, FSK, OFDM,
+and a noisier QPSK example. These are software-generated practice signals,
+not recordings from a physical radio.
